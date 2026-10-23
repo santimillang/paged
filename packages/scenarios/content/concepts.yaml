@@ -1,0 +1,84 @@
+- id: horizontal-scaling
+  title: Horizontal scaling
+  explainer: Add more machines instead of bigger ones. Works when the service is stateless and a load balancer spreads traffic across instances.
+- id: load-balancing
+  title: Load balancing
+  explainer: Spread requests across healthy instances so none is overloaded and failed instances stop receiving traffic.
+- id: autoscaling
+  title: Autoscaling
+  explainer: Add capacity automatically when a metric such as CPU utilization crosses a target. New instances take time to boot, so scale before you are at 100%.
+- id: caching
+  title: Caching
+  explainer: Keep hot data in fast memory close to the caller. Hit ratio is everything; a cold cache protects nothing.
+- id: read-heavy
+  title: Read-heavy workloads
+  explainer: When reads dwarf writes, cache them, replicate them, or serve them from the edge, and keep the write path simple.
+- id: read-replicas
+  title: Read replicas
+  explainer: Copies of the database that serve reads. They scale reads, not writes, and they lag the primary slightly.
+- id: hot-keys
+  title: Hot keys
+  explainer: One key gets a huge share of traffic and overloads the single shard that owns it. Adding shards doesn't help; spreading or caching the key does.
+- id: edge-caching
+  title: Edge caching (CDN)
+  explainer: Serve cacheable responses from servers near users so the traffic never reaches your origin.
+- id: fan-out
+  title: Fan-out
+  explainer: One event must be delivered to many recipients. Doing it on write makes reads cheap; doing it on read makes writes cheap.
+- id: hybrid-feeds
+  title: Hybrid feeds
+  explainer: Fan out on write for normal users, and merge celebrity posts at read time, so no single write explodes.
+- id: thundering-herd
+  title: Thundering herd
+  explainer: Many clients do the same expensive thing at the same moment, such as a cache miss or a reconnect, and flatten the backend.
+- id: cache-warming
+  title: Cache warming
+  explainer: Pre-load hot keys before (or right after) a cache starts, so it doesn't begin with a 0% hit ratio.
+- id: request-coalescing
+  title: Request coalescing
+  explainer: When many requests miss the same key at once, let one fetch it and the rest wait for that result.
+- id: circuit-breakers
+  title: Circuit breakers
+  explainer: Stop calling a dependency that is failing, fail fast instead, and probe it again later. This keeps threads free for healthy work.
+- id: bulkheads
+  title: Bulkheads
+  explainer: Give each dependency its own pool of threads or connections so one slow dependency can't starve the others.
+- id: multi-region
+  title: Multi-region
+  explainer: Run in more than one region so a regional outage takes away a slice of capacity, not the whole product.
+- id: failover
+  title: Failover
+  explainer: Shift traffic from a failed component or region to a healthy one. The healthy side must have room to absorb it.
+- id: retries
+  title: Retries
+  explainer: Retrying hides transient errors but multiplies load during real overload. Bound them with budgets.
+- id: backoff
+  title: Exponential backoff
+  explainer: Wait longer between each retry so a struggling service gets room to recover.
+- id: jitter
+  title: Jitter
+  explainer: Add randomness to retry and reconnect timing so clients don't all come back at the same instant.
+- id: partitioning
+  title: Partitioning (sharding)
+  explainer: Split data across nodes by key. The partition key decides whether load spreads evenly or piles onto one node.
+- id: queues
+  title: Queues
+  explainer: Put work in a buffer and let workers consume it at their own pace, decoupling producers from consumers.
+- id: backpressure
+  title: Backpressure
+  explainer: When consumers fall behind, slow the producers down or reject work, instead of letting queues grow without bound.
+- id: rate-limiting
+  title: Rate limiting
+  explainer: Cap how many requests a client or the whole system accepts per second, rejecting the excess fast and cheaply.
+- id: waiting-rooms
+  title: Virtual waiting rooms
+  explainer: Admit users at a rate the system can handle and queue the rest with honest feedback, instead of letting everyone in and failing.
+- id: consistency
+  title: Consistency
+  explainer: Decide which reads must see the latest write. Strong consistency costs latency and availability; eventual consistency costs correctness windows.
+- id: idempotency
+  title: Idempotency
+  explainer: Make retried operations safe by giving each a unique key, so doing it twice has the same effect as doing it once.
+- id: locking
+  title: Locking and reservations
+  explainer: Prevent two buyers from getting the same item, by holding a short reservation or using conditional writes.
