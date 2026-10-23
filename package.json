@@ -1,0 +1,12 @@
+{
+  "name": "paged",
+  "private": true,
+  "type": "module",
+  "packageManager": "pnpm@10.30.3",
+  "engines": { "node": ">=22" },
+  "scripts": {
+    "test": "pnpm -r test",
+    "typecheck": "pnpm -r typecheck",
+    "validate": "pnpm --filter @paged/scenarios validate"
+  }
+}
