@@ -1,0 +1,25 @@
+- id: url-shortener
+  title: URL Shortener
+  emoji: "🔗"
+  description: The interview classic. Learn the basics of scaling, caching and hot keys on a tiny service that suddenly matters.
+  stages: ["1k users", "100k users", "10M users"]
+- id: twitter
+  title: Twitter
+  emoji: "🐦"
+  description: Timelines, celebrities and the fan-out problem at the scale of a global town square.
+  stages: ["10M users", "100M users"]
+- id: netflix
+  title: Netflix
+  emoji: "🎬"
+  description: Resilience engineering at streaming scale. Dependencies fail, regions fail, and the show must go on.
+  stages: ["50M users", "200M users"]
+- id: discord
+  title: Discord
+  emoji: "💬"
+  description: Real-time chat with huge servers, trillions of messages and millions of persistent connections.
+  stages: ["10M users", "150M users"]
+- id: ticketmaster
+  title: Ticketmaster
+  emoji: "🎟️"
+  description: Flash sales where everyone shows up at the same second and every seat can be sold only once.
+  stages: ["Presale", "On-sale"]
