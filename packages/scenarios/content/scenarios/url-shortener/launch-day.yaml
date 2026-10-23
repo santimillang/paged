@@ -1,0 +1,66 @@
+# Expected dynamics:
+#  before: api 650 rps / 1000 cap -> rho 0.65, healthy.
+#  t=20 spike x4 -> 2600 rps, api rho 2.6 -> ~24% availability, burns ~1.0 budget/s -> do nothing loses ~t=139.
+#  mitigate-only: scale +2 (lands t=51) -> rho 1.3, still ~48% availability -> loses.
+#  full: autoscaling (on at t=32, launches 7 at t=37, ready t=52) + scale +2 -> 11 instances, rho 0.47 -> wins ~t=112.
+id: launch-day
+world: url-shortener
+stage: "1k users"
+order: 1
+title: "Launch day: you hit the front page"
+difficulty: 1
+concepts: [horizontal-scaling, load-balancing, autoscaling]
+briefing: >
+  Your tiny URL shortener just hit the front page of a big tech news site. Two API servers behind a
+  load balancer were plenty yesterday. Keep the service up.
+slo: { availability: 99.9, p99Ms: 800 }
+errorBudgetSeconds: 120
+seed: 101
+architecture:
+  nodes:
+    - { id: lb, kind: lb, label: Load balancer, baseLatencyMs: 1, timeoutMs: 2000, costPerInstanceHour: 5 }
+    - { id: api, kind: service, label: API, instances: 2, capacityPerInstance: 500, baseLatencyMs: 20, costPerInstanceHour: 10 }
+    - { id: db, kind: db, label: Postgres, capacityPerInstance: 5000, writeCapacityPerInstance: 2000, baseLatencyMs: 5, costPerInstanceHour: 40 }
+  edges: [[lb, api], [api, db]]
+traffic:
+  - { id: "GET /:code", path: [lb, api, db], rps: 600, readRatio: 1 }
+  - { id: "POST /shorten", path: [lb, api, db], rps: 50, readRatio: 0 }
+faults:
+  - { at: 20, type: traffic-spike, multiplier: 4 }
+toolbox:
+  mitigate: [scale, shed-load, rate-limit]
+  design: [enable-autoscaling]
+win: { sloHealthyForSeconds: 60 }
+requiredDesignFixes: [enable-autoscaling]
+budgetTarget: 0.5
+costTarget: 200
+solution:
+  - { at: 21, action: scale, target: api, params: { delta: 2 } }
+  - { at: 22, action: enable-autoscaling, target: api, params: { targetUtilization: 0.6 } }
+clues:
+  - "Which component turned red first? Click it and look at its utilization."
+  - "The API is stateless. What happens if you run more copies of it?"
+  - "Manual scaling works today. What happens tomorrow, when traffic doubles again while you're asleep?"
+debrief:
+  whatHappened: >
+    Traffic jumped 4x. Two API instances can serve about 1,000 requests per second; they were offered 2,600.
+    Past 100% utilization a server can't serve more, so the excess was rejected, and the requests it did accept
+    queued until they hit the load balancer's timeout.
+  lesson: >
+    Stateless services scale horizontally: add instances behind a load balancer. Autoscaling does it for you based
+    on utilization, but new instances take time to boot, so target ~60% utilization rather than 90% to leave
+    headroom for the next spike.
+  realWorld: >
+    Every major platform offers this exact loop. AWS Auto Scaling groups and the Kubernetes Horizontal Pod
+    Autoscaler both adjust the number of instances automatically based on demand or a metric such as CPU
+    utilization, within the minimum and maximum you configure.
+  interviewMoment:
+    question: "Your service is getting 4x its normal traffic. Walk me through how you'd handle it, now and long term."
+    modelAnswer: >
+      Now: confirm the bottleneck (API CPU, not the database), scale the stateless tier horizontally, and shed or
+      rate-limit if new capacity is still booting. Long term: autoscale on a utilization target with headroom
+      (~60%), keep the service stateless so any instance can serve any request, load-test to know the per-instance
+      capacity, and make sure the next bottleneck (usually the database) can absorb the extra load.
+  sources:
+    - https://docs.aws.amazon.com/autoscaling/ec2/userguide/what-is-amazon-ec2-auto-scaling.html
+    - https://kubernetes.io/docs/tasks/run-application/horizontal-pod-autoscale/

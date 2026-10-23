@@ -1,0 +1,66 @@
+# Expected dynamics:
+#  before: db reads 1200/2000 + writes 100/1000 -> rho 0.7, healthy.
+#  t=15 spike x2.5 on reads -> db rho 1.6 -> ~54% availability, db latency 500ms -> do nothing loses.
+#  mitigate-only: rate-limit lb at 2000 -> still ~46% errors -> loses.
+#  full: add-cache on db (lands t=37, warms 0.02/s); at t=65 hit ~0.56 -> db rho ~0.76; lift rate limit at t=65 -> wins ~t=125.
+id: read-heavy
+world: url-shortener
+stage: "100k users"
+order: 2
+title: "The database is drowning in reads"
+difficulty: 2
+concepts: [caching, read-heavy, read-replicas]
+briefing: >
+  A popular newsletter just linked dozens of your short links. Redirects are pure reads, and every one of them
+  goes to the database.
+slo: { availability: 99.9, p99Ms: 800 }
+errorBudgetSeconds: 120
+seed: 202
+architecture:
+  nodes:
+    - { id: lb, kind: lb, label: Load balancer, baseLatencyMs: 1, timeoutMs: 2000, costPerInstanceHour: 5 }
+    - { id: api, kind: service, label: API, instances: 8, capacityPerInstance: 500, baseLatencyMs: 20, costPerInstanceHour: 10 }
+    - { id: db, kind: db, label: Postgres, capacityPerInstance: 2000, writeCapacityPerInstance: 1000, baseLatencyMs: 5, costPerInstanceHour: 40 }
+  edges: [[lb, api], [api, db]]
+traffic:
+  - { id: "GET /:code", path: [lb, api, db], rps: 1200, readRatio: 1 }
+  - { id: "POST /shorten", path: [lb, api, db], rps: 100, readRatio: 0 }
+faults:
+  - { at: 15, type: traffic-spike, route: "GET /:code", multiplier: 2.5 }
+toolbox:
+  mitigate: [scale, rate-limit, shed-load]
+  design: [add-cache, add-read-replica]
+win: { sloHealthyForSeconds: 60 }
+requiredDesignFixes: [add-cache, add-read-replica]
+budgetTarget: 0.5
+costTarget: 200
+solution:
+  - { at: 16, action: rate-limit, target: lb, params: { rps: 2000 } }
+  - { at: 17, action: add-cache, target: db }
+  - { at: 65, action: rate-limit, target: lb, params: { rps: 0 } }
+clues:
+  - "The API looks fine. What is it waiting on?"
+  - "Almost every request is a read of a link that never changes. Does it need to hit the database every time?"
+  - "Scaling the API adds more callers to the same database."
+debrief:
+  whatHappened: >
+    Redirect traffic jumped 2.5x and every redirect read the same small set of rows from the primary database.
+    The database saturated, its latency went from milliseconds to half a second, and API requests began timing out
+    waiting for it. More API servers would only have added more callers.
+  lesson: >
+    Read-heavy workloads should rarely reach the database. Short links are immutable, which makes them perfect
+    cache entries. A cache in front of the database absorbs repeat reads; read replicas are the alternative when
+    data changes often or the working set is too big to cache. Remember that a new cache starts cold.
+  realWorld: >
+    Caching hot, rarely changing data in an in-memory store like Redis or Memcached is standard practice, and
+    managed databases offer read replicas specifically to scale read traffic away from the primary.
+  interviewMoment:
+    question: "Your URL shortener does 100 reads per write. How do you design the read path?"
+    modelAnswer: >
+      Put a cache (Redis or Memcached) in front of the database keyed by short code, with a long TTL because
+      mappings are immutable. Expect a 95%+ hit ratio. Use read replicas for cache misses if needed, and a CDN for
+      the hottest links. Plan for a cold cache: warm it or protect the database while it fills. Writes go to the
+      primary and can populate the cache.
+  sources:
+    - https://aws.amazon.com/caching/best-practices/
+    - https://docs.aws.amazon.com/AmazonRDS/latest/UserGuide/USER_ReadRepl.html

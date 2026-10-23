@@ -1,0 +1,65 @@
+# Expected dynamics:
+#  before: cache 2600/12000 -> rho 0.22, healthy.
+#  t=20 hot-key share 0.5 + GET x3 -> cache hot partition rho ~1.58 -> ~77% availability -> do nothing loses.
+#  mitigate-only: scale cache +4 -> hot share 0.5625, hot rho ~1.43 -> still overloaded -> loses.
+#  full: add-cdn in front of lb (lands t=52, warms 0.05/s); hit >= ~0.37 by t=60 -> hot rho < 0.9 -> wins ~t=120.
+id: viral-link
+world: url-shortener
+stage: "10M users"
+order: 3
+title: "One link goes viral"
+difficulty: 3
+concepts: [hot-keys, edge-caching, partitioning]
+briefing: >
+  A celebrity just posted one of your short links to a hundred million followers. Your cache cluster is big,
+  and mostly idle. Somehow it's on fire anyway.
+slo: { availability: 99.9, p99Ms: 800 }
+errorBudgetSeconds: 120
+seed: 303
+architecture:
+  nodes:
+    - { id: lb, kind: lb, label: Load balancer, baseLatencyMs: 1, timeoutMs: 2000, costPerInstanceHour: 5 }
+    - { id: api, kind: service, label: API, instances: 20, capacityPerInstance: 500, baseLatencyMs: 20, costPerInstanceHour: 10 }
+    - { id: cache, kind: cache, label: Redis cluster, instances: 4, capacityPerInstance: 3000, baseLatencyMs: 1, hitRatio: 0.95, partitioned: true, costPerInstanceHour: 15 }
+    - { id: db, kind: db, label: Postgres, capacityPerInstance: 3000, writeCapacityPerInstance: 1500, baseLatencyMs: 5, costPerInstanceHour: 40 }
+  edges: [[lb, api], [api, cache], [cache, db]]
+traffic:
+  - { id: "GET /:code", path: [lb, api, cache, db], rps: 2500, readRatio: 1 }
+  - { id: "POST /shorten", path: [lb, api, cache, db], rps: 100, readRatio: 0 }
+faults:
+  - { at: 20, type: hot-key, target: cache, share: 0.5 }
+  - { at: 20, type: traffic-spike, route: "GET /:code", multiplier: 3 }
+toolbox:
+  mitigate: [scale, rate-limit, shed-load]
+  design: [add-cdn, request-coalescing]
+win: { sloHealthyForSeconds: 60 }
+requiredDesignFixes: [add-cdn]
+budgetTarget: 0.5
+costTarget: 450
+solution:
+  - { at: 21, action: scale, target: cache, params: { delta: 4 } }
+  - { at: 22, action: add-cdn, target: lb }
+clues:
+  - "The cache cluster's average load is low, but one node is saturated. Why would one node get more than its share?"
+  - "Adding cache nodes re-spreads the other keys. Where does the hot key live afterwards?"
+  - "This link's response is the same for everyone. Does it even need to reach your servers?"
+debrief:
+  whatHappened: >
+    Half of all traffic was for a single short link. A key lives on exactly one cache shard, so one node took half
+    the load while the other three idled. Adding nodes didn't help: the hot key still maps to one node.
+  lesson: >
+    Hot keys break the assumption that partitioning spreads load evenly. Fixes are to cache the hot item closer to
+    users (CDN or in-process cache), replicate the hot key across shards, or split it. Redirects for a popular link
+    are identical for everyone, so a CDN can serve them without your origin ever seeing the traffic.
+  realWorld: >
+    CDNs exist for exactly this: serving popular, cacheable responses from edge locations near users so the origin
+    only sees cache misses.
+  interviewMoment:
+    question: "One key is getting 50% of your traffic and the shard that owns it is melting. What do you do?"
+    modelAnswer: >
+      Confirm it's a hot key (one shard saturated while the cluster average is low). Short term: serve it from a
+      local or edge cache, or replicate the key to several shards and read from any. Longer term: put a CDN in
+      front of cacheable responses, detect hot keys automatically, and choose partition keys that spread load. Note
+      that adding shards doesn't help, because the key still hashes to one shard.
+  sources:
+    - https://aws.amazon.com/what-is/cdn/
