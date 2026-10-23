@@ -1,4 +1,18 @@
-import type { ActionId, ActionLogEntry, Series } from '@paged/engine';
+import type { ActionId, ActionLogEntry, FaultSpec, Series } from '@paged/engine';
+
+export interface Marker {
+  t: number;
+  kind: 'fault' | 'action';
+}
+
+/** Where the trouble started and when each of the player's actions landed, for the debrief timeline. */
+export function timelineMarkers(faults: FaultSpec[], log: ActionLogEntry[]): Marker[] {
+  const markers: Marker[] = [
+    ...faults.map((f) => ({ t: f.at, kind: 'fault' as const })),
+    ...log.filter((a) => a.status === 'effective').map((a) => ({ t: a.t, kind: 'action' as const })),
+  ];
+  return markers.sort((a, b) => a.t - b.t);
+}
 
 export type Verdict = 'helped' | 'neutral' | 'hurt';
 

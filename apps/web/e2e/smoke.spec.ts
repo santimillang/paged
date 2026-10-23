@@ -5,7 +5,9 @@ test('play the tutorial incident to a win', async ({ page }) => {
   await page.getByRole('link', { name: /Launch day/ }).click();
   await page.getByRole('button', { name: 'Start shift' }).click();
   await page.getByRole('button', { name: /^Autoscaling/ }).click();
-  await page.getByTestId('node-api').click();
+  // Keyboard path: the map must be usable without a mouse.
+  await page.getByTestId('node-api').focus();
+  await page.keyboard.press('Enter');
   await expect(page.getByText(/Autoscaling scheduled on API/)).toBeVisible();
   await page.getByRole('button', { name: '4x' }).click();
   await expect(page.getByRole('heading', { name: 'Incident resolved' })).toBeVisible({ timeout: 90_000 });

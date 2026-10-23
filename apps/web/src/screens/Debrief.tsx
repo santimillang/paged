@@ -5,7 +5,7 @@ import { LineChart } from '../components/LineChart';
 import { Stars } from '../components/Stars';
 import { content } from '../content';
 import { clock, fmtPct } from '../format';
-import { classifyActions } from '../game/debrief';
+import { classifyActions, timelineMarkers } from '../game/debrief';
 import type { RunSummary } from '../game/useIncident';
 import { href } from '../router';
 
@@ -22,7 +22,7 @@ export function Debrief({ run, scenario, nextId, onRetry }: Props) {
   const [showAnswer, setShowAnswer] = useState(false);
   const { sim } = run;
   const log = sim.actionLog();
-  const markers = log.filter((a) => a.status === 'effective').map((a) => a.t);
+  const markers = timelineMarkers(scenario.sim.faults, log);
   const verdicts = classifyActions(log, sim.history('global:errorBudgetRemaining'), (a) => ACTIONS[a].label);
   const won = run.outcome === 'won';
   const conceptTitle = (id: string) => content.catalog.concepts.find((c) => c.id === id)?.title ?? id;
@@ -41,6 +41,9 @@ export function Debrief({ run, scenario, nextId, onRetry }: Props) {
         <Stars n={run.stars} />
       </header>
 
+      <p className="muted small legend">
+        <span className="legend-fault">┊</span> trouble starts · <span className="legend-action">┊</span> your actions take effect
+      </p>
       <section className="panel timeline" aria-label="Timeline">
         <LineChart title="Availability" series={sim.history('global:availability')} format={(v) => fmtPct(v, 1)} color="#3ddc97" yMax={1} markers={markers} />
         <LineChart title="Error budget (s)" series={sim.history('global:errorBudgetRemaining')} color="#ff7a45" markers={markers} />

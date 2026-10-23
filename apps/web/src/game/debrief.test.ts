@@ -1,11 +1,22 @@
 import { describe, expect, it } from 'vitest';
-import { classifyActions } from './debrief';
+import { classifyActions, timelineMarkers } from './debrief';
 
 const series = (f: (t: number) => number) => {
   const t = Array.from({ length: 120 }, (_, i) => i + 1);
   return { t, v: t.map(f) };
 };
 const at = (t: number) => ({ t, request: { action: 'add-cache' as const, target: 'db' }, status: 'effective' as const });
+
+describe('timelineMarkers', () => {
+  it('marks fault starts and effective actions, sorted by time', () => {
+    const faults = [{ at: 20, type: 'cache-flush' as const, target: 'cache' }];
+    const log = [at(35), { ...at(10), status: 'scheduled' as const }];
+    expect(timelineMarkers(faults, log)).toEqual([
+      { t: 20, kind: 'fault' },
+      { t: 35, kind: 'action' },
+    ]);
+  });
+});
 
 describe('classifyActions', () => {
   it('helped when burn drops', () => {

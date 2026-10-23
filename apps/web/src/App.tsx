@@ -2,14 +2,14 @@ import { useEffect, useState } from 'react';
 import { content } from './content';
 import type { RunSummary } from './game/useIncident';
 import { isIncidentUnlocked, loadProgress, recordStars, saveProgress, type Progress } from './progress';
-import { go, parseHash, type Route } from './router';
+import { go, parseHash, redirect, type Route } from './router';
 import { Concepts } from './screens/Concepts';
 import { Debrief } from './screens/Debrief';
 import { Incident } from './screens/Incident';
 import { WorldMap } from './screens/WorldMap';
 
 function ToMap() {
-  useEffect(() => go({ name: 'map' }), []);
+  useEffect(() => redirect({ name: 'map' }), []);
   return null;
 }
 

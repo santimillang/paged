@@ -11,17 +11,29 @@ const ICON: Record<NodeKind, string> = {
 
 const HEALTH_COLOR = { ok: 'var(--ok)', warn: 'var(--warn)', crit: 'var(--crit)' } as const;
 
-type CompData = { node: NodeSnapshot; selected: boolean; pending: boolean; targetable: boolean };
+type CompData = { node: NodeSnapshot; selected: boolean; pending: boolean; targetable: boolean; onActivate: () => void };
 type CompNode = Node<CompData, 'component'>;
 
 const Component = memo(function Component({ data }: NodeProps<CompNode>) {
-  const { node, selected, pending, targetable } = data;
+  const { node, selected, pending, targetable, onActivate } = data;
   const m = node.metrics;
   const fire = m.utilization >= 1 || m.errorRate > 0.05;
   const cold = m.hitRatio !== undefined && m.hitRatio < 0.5;
   const cls = ['comp', `health-${node.health}`, selected && 'selected', targetable && 'targetable'].filter(Boolean).join(' ');
   return (
-    <div className={cls} data-testid={`node-${node.id}`}>
+    <div
+      className={cls}
+      data-testid={`node-${node.id}`}
+      role="button"
+      tabIndex={0}
+      aria-label={`${node.label}, ${node.kind}, ${node.health}`}
+      onKeyDown={(e) => {
+        if (e.key !== 'Enter' && e.key !== ' ') return;
+        e.preventDefault();
+        e.stopPropagation();
+        onActivate();
+      }}
+    >
       <Handle type="target" position={Position.Left} />
       <div className="comp-head">
         <span className="comp-icon" aria-hidden>{ICON[node.kind]}</span>
@@ -73,6 +85,7 @@ export function ArchitectureMap({ snap, selected, pendingTargets, targetKinds, o
       selected: n.id === selected,
       pending: pendingTargets.has(n.id),
       targetable: targetKinds !== null && targetKinds.includes(n.kind),
+      onActivate: () => onNodeClick(n.id),
     },
   }));
 

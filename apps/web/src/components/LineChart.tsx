@@ -1,5 +1,6 @@
 import type { Series } from '@paged/engine';
 import { useEffect, useRef } from 'react';
+import type { Marker } from '../game/debrief';
 import uPlot from 'uplot';
 import 'uplot/dist/uPlot.min.css';
 
@@ -7,8 +8,8 @@ interface Props {
   series: Series;
   title: string;
   format?: (v: number) => string;
-  /** Simulated times (seconds) to mark with a dashed vertical line, e.g. when actions landed. */
-  markers?: number[];
+  /** Vertical lines: faults in red, the player's actions in blue. */
+  markers?: Marker[];
   /** 6-digit hex; canvas can't read CSS variables. */
   color?: string;
   height?: number;
@@ -48,9 +49,9 @@ export function LineChart({ series, title, format = (v) => v.toFixed(0), markers
           (u) => {
             const ctx = u.ctx;
             ctx.save();
-            ctx.strokeStyle = '#7aa2ff';
             ctx.setLineDash([4, 4]);
-            for (const t of markersRef.current) {
+            for (const { t, kind } of markersRef.current) {
+              ctx.strokeStyle = kind === 'fault' ? '#ff5d5d' : '#7aa2ff';
               const x = u.valToPos(t, 'x', true);
               ctx.beginPath();
               ctx.moveTo(x, u.bbox.top);

@@ -104,6 +104,7 @@ a.incident-link:hover { border-color: var(--accent); }
 }
 .comp.health-warn { border-color: var(--warn); }
 .comp.health-crit { border-color: var(--crit); box-shadow: 0 0 22px #ff5d5d55; }
+.comp:focus-visible { outline: 2px dashed var(--accent); outline-offset: 3px; }
 .comp.selected { outline: 2px solid var(--accent-2); outline-offset: 3px; }
 .comp.targetable { background: #1d2740; }
 .comp-head { display: flex; align-items: center; gap: 0.35rem; font-weight: 600; }
@@ -187,6 +188,9 @@ a.incident-link:hover { border-color: var(--accent); }
 .interview { border-color: var(--accent); background: linear-gradient(180deg, #24180f, var(--panel)); }
 .interview h2 { color: var(--accent); }
 .interview .question { font-size: 1.1rem; font-weight: 600; }
+.legend { margin: 0 0 -0.6rem; }
+.legend-fault { color: var(--crit); font-weight: 700; }
+.legend-action { color: var(--accent-2); font-weight: 700; }
 .debrief-actions { display: flex; gap: 0.5rem; flex-wrap: wrap; }
 
 @media (max-width: 900px) {
