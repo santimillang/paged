@@ -48,6 +48,14 @@ describe('parseScenario', () => {
   });
 });
 
+describe('review fixes: YAML syntax errors', () => {
+  it('names the file when the YAML itself is malformed', () => {
+    expect(() => parseScenario('id: [unclosed', catalog, 'broken.yaml')).toThrow(ScenarioError);
+    expect(() => parseScenario('id: [unclosed', catalog, 'broken.yaml')).toThrow(/^broken\.yaml:/);
+    expect(() => parseCatalog('- [unclosed', WORLDS)).toThrow(/^concepts\.yaml:/);
+  });
+});
+
 describe('parseCatalog', () => {
   it('rejects duplicate ids', () => {
     expect(() => parseCatalog(CONCEPTS + CONCEPTS, WORLDS)).toThrow('duplicate concept id "caching"');

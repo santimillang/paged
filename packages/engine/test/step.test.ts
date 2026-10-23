@@ -34,6 +34,18 @@ describe('step: steady state', () => {
   });
 });
 
+describe('review fixes: idle routes', () => {
+  it('a route with no traffic does not drive the SLO p99', () => {
+    const sc = threeTier({ faults: [{ at: 0, type: 'latency-injection', target: 'db', addMs: 2000 }] });
+    sc.routes[0]!.path = ['lb', 'api'];
+    sc.routes.push({ id: 'idle', path: ['lb', 'api', 'db'], rps: 0 });
+    const s = createState(sc, 1);
+    step(s);
+    expect(s.stats.sloHealthy).toBe(true);
+    expect(s.stats.errorBudgetRemaining).toBe(60);
+  });
+});
+
 describe('step: overload', () => {
   it('rejects excess load and burns the error budget until lost', () => {
     const s = createState(threeTier({ rps: 2000 }), 1);

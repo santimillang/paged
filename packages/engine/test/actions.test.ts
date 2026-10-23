@@ -38,6 +38,26 @@ describe('requestAction validation', () => {
   });
 });
 
+describe('review fixes: actions', () => {
+  it('rejects a hitRatio outside (0, 1] for add-cache and add-cdn', () => {
+    const s = createState(threeTier(), 1);
+    expect(requestAction(s, { action: 'add-cache', target: 'db', params: { hitRatio: 5 } })).toEqual({ ok: false, reason: 'hitRatio must be greater than 0 and at most 1' });
+    expect(requestAction(s, { action: 'add-cdn', target: 'lb', params: { hitRatio: -1 } })).toEqual({ ok: false, reason: 'hitRatio must be greater than 0 and at most 1' });
+  });
+
+  it('re-validates topology actions when they take effect, so caches do not stack', () => {
+    const sc = threeTier();
+    sc.routes[0]!.path = ['api', 'db'];
+    const s = createState(sc, 1);
+    expect(requestAction(s, { action: 'add-cache', target: 'api' }).ok).toBe(true);
+    expect(requestAction(s, { action: 'add-cdn', target: 'api' }).ok).toBe(true);
+    run(s, 31);
+    expect(s.routes[0]!.path).toEqual(['api-cache', 'api', 'db']);
+    expect(s.effectiveActions).toEqual(['add-cache']);
+    expect(s.logs.since(0).some((l) => l.message.startsWith('Add CDN on api could not be applied'))).toBe(true);
+  });
+});
+
 describe('mitigations', () => {
   it('shed-load reduces utilization', () => {
     const s = createState(threeTier({ rps: 2000 }), 1);

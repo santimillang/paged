@@ -22,10 +22,18 @@ function uniqueIds(items: { id: string }[], what: string): void {
   }
 }
 
+function readYaml(text: string, source: string): unknown {
+  try {
+    return parseYaml(text);
+  } catch (e) {
+    throw new ScenarioError(source, [`invalid YAML: ${(e as Error).message}`]);
+  }
+}
+
 export function parseCatalog(conceptsYaml: string, worldsYaml: string): Catalog {
-  const c = conceptsSchema.safeParse(parseYaml(conceptsYaml));
+  const c = conceptsSchema.safeParse(readYaml(conceptsYaml, 'concepts.yaml'));
   if (!c.success) throw new ScenarioError('concepts.yaml', zodIssues(c.error));
-  const w = worldsSchema.safeParse(parseYaml(worldsYaml));
+  const w = worldsSchema.safeParse(readYaml(worldsYaml, 'worlds.yaml'));
   if (!w.success) throw new ScenarioError('worlds.yaml', zodIssues(w.error));
   uniqueIds(c.data, 'concept');
   uniqueIds(w.data, 'world');
@@ -33,7 +41,7 @@ export function parseCatalog(conceptsYaml: string, worldsYaml: string): Catalog 
 }
 
 export function parseScenario(yamlText: string, catalog: Catalog, source = 'scenario'): Scenario {
-  const parsed = scenarioSchema.safeParse(parseYaml(yamlText));
+  const parsed = scenarioSchema.safeParse(readYaml(yamlText, source));
   if (!parsed.success) throw new ScenarioError(source, zodIssues(parsed.error));
   const f = parsed.data;
   const sim: SimScenario = {

@@ -213,7 +213,7 @@ function updateStats(s: SimState): void {
   for (const r of s.routes) {
     offered += r.offered;
     good += r.offered * r.availability;
-    worst = Math.max(worst, r.p99Ms);
+    if (r.offered > 0) worst = Math.max(worst, r.p99Ms);
   }
   const availability = offered > 0 ? good / offered : 1;
   const allowed = 1 - slo.availability / 100;

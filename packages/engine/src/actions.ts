@@ -17,6 +17,11 @@ const num = (p: ActionParams, k: string, d: number): number => (typeof p[k] === 
 const bool = (p: ActionParams, k: string, d: boolean): boolean => (typeof p[k] === 'boolean' ? (p[k] as boolean) : d);
 const str = (p: ActionParams, k: string, d: string): string => (typeof p[k] === 'string' ? (p[k] as string) : d);
 
+const hitRatioError = (p: ActionParams, d: number): string | null => {
+  const h = num(p, 'hitRatio', d);
+  return h > 0 && h <= 1 ? null : 'hitRatio must be greater than 0 and at most 1';
+};
+
 const isEntry = (s: SimState, id: string): boolean => s.routes.some((r) => r.path[0] === id);
 const hasCacheInFront = (s: SimState, id: string): boolean =>
   s.edges.some((e) => e.to === id && isCacheLike(getNode(s, e.from)));
@@ -83,7 +88,7 @@ export const ACTIONS: Record<ActionId, ActionDef> = {
     id: 'add-cache', category: 'design', label: 'Add cache',
     description: 'Put a cache in front of this component. It starts cold and warms up.',
     targetKinds: ['db', 'service', 'external'], delaySec: 20,
-    validate: (s, n) => (hasCacheInFront(s, n.id) ? `${n.id} already has a cache in front of it` : null),
+    validate: (s, n, p) => (hasCacheInFront(s, n.id) ? `${n.id} already has a cache in front of it` : hitRatioError(p, 0.9)),
     effect: (s, n, p) => {
       const c = resolveNode({
         id: uniqueId(s.nodes, `${n.id}-cache`), kind: 'cache', label: `${n.label} cache`,
@@ -107,10 +112,10 @@ export const ACTIONS: Record<ActionId, ActionDef> = {
     id: 'add-cdn', category: 'design', label: 'Add CDN',
     description: 'Serve cacheable reads from the edge, before traffic reaches you.',
     targetKinds: ['lb', 'service'], delaySec: 30,
-    validate: (s, n) => {
+    validate: (s, n, p) => {
       if (!isEntry(s, n.id)) return 'a CDN goes in front of an entry point (the first hop of a route)';
       if (hasCacheInFront(s, n.id)) return `${n.id} already has a cache in front of it`;
-      return null;
+      return hitRatioError(p, 0.95);
     },
     effect: (s, n, p) => {
       const c = resolveNode({
@@ -189,7 +194,14 @@ export function applyDueActions(s: SimState): void {
     const n = s.nodes.get(p.request.target);
     if (!n) continue;
     const def = ACTIONS[p.request.action];
-    def.effect(s, n, p.request.params ?? {});
+    const params = p.request.params ?? {};
+    // The world may have changed since the request (e.g. another topology action landed first).
+    const err = def.validate?.(s, n, params) ?? null;
+    if (err) {
+      s.logs.add(s.t, { level: 'warn', nodeId: n.id, message: `${def.label} on ${n.label} could not be applied: ${err}` });
+      continue;
+    }
+    def.effect(s, n, params);
     s.actionLog.push({ t: s.t, request: p.request, status: 'effective' });
     s.effectiveActions.push(p.request.action);
     s.logs.add(s.t, { level: 'info', nodeId: n.id, message: `${def.label} applied to ${n.label}` });
