@@ -2,7 +2,7 @@
 #  before: api 650 rps / 1000 cap -> rho 0.65, healthy.
 #  t=20 spike x4 -> 2600 rps, api rho 2.6 -> ~24% availability, burns ~1.0 budget/s -> do nothing loses ~t=139.
 #  mitigate-only: scale +2 (lands t=51) -> rho 1.3, still ~48% availability -> loses.
-#  full: autoscaling (on at t=32, launches 7 at t=37, ready t=52) + scale +2 -> 11 instances, rho 0.47 -> wins ~t=112.
+#  full: autoscaling (on at t=32, launches 7 at t=37, ready t=52) + scale +2 -> 11 instances, rho 0.47 -> holds 30s -> wins ~t=82.
 id: launch-day
 world: url-shortener
 stage: "1k users"
@@ -30,7 +30,7 @@ faults:
 toolbox:
   mitigate: [scale, shed-load, rate-limit]
   design: [enable-autoscaling]
-win: { sloHealthyForSeconds: 60 }
+win: { sloHealthyForSeconds: 30 }
 requiredDesignFixes: [enable-autoscaling]
 budgetTarget: 0.5
 costTarget: 200

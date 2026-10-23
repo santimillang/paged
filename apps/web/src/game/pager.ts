@@ -1,4 +1,9 @@
-import type { SimSnapshot, SloSpec } from '@paged/engine';
+import type { GlobalStats, SimSnapshot, SloSpec } from '@paged/engine';
+
+/** Shown once the system is healthy again: how close the player is to closing the incident. */
+export function holdText(st: GlobalStats): string {
+  return `Stabilizing: holding SLO ${Math.floor(st.healthyForSeconds)}s / ${st.holdTargetSeconds}s`;
+}
 
 /** The one-line page a real on-call would get: errors take priority over latency. */
 export function pageText(snap: SimSnapshot, slo: SloSpec): string {

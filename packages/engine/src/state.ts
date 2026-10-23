@@ -108,6 +108,7 @@ export function createState(scenario: SimScenario, seed: number): SimState {
       t: 0, availability: 1, worstP99Ms: 0, sloHealthy: true,
       errorBudgetRemaining: scenario.errorBudgetSeconds, errorBudgetFraction: 1,
       usersOnline: scenario.baseUsers ?? 1_000_000, costPerHour: 0,
+      healthyForSeconds: 0, holdTargetSeconds: scenario.win.sloHealthyForSeconds,
     },
     logs: new LogBook(),
     history: new History(),

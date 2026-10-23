@@ -1,7 +1,13 @@
 import { describe, expect, it } from 'vitest';
-import { pageText } from './pager';
+import { holdText, pageText } from './pager';
 
 const snap = (availability: number, worstP99Ms: number) => ({ stats: { availability, worstP99Ms } }) as never;
+
+describe('holdText', () => {
+  it('counts the hold towards the win', () => {
+    expect(holdText({ healthyForSeconds: 23.4, holdTargetSeconds: 30 } as never)).toBe('Stabilizing: holding SLO 23s / 30s');
+  });
+});
 
 describe('pageText', () => {
   it('reports errors first, then latency', () => {

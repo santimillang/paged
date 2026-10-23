@@ -50,11 +50,9 @@ export function Incident({ scenario, sound, onDone }: Props) {
     }
   };
 
-  const pageDisplay = page && (snap.stats.sloHealthy ? `Recovering. Hold the SLO. (${page})` : page);
-
   return (
     <div className="incident">
-      <TopBar snap={snap} scenario={scenario} page={pageDisplay} speed={speed} setSpeed={setSpeed} />
+      <TopBar snap={snap} scenario={scenario} page={page} speed={speed} setSpeed={setSpeed} />
       <div className="incident-body">
         <ArchitectureMap
           snap={snap}

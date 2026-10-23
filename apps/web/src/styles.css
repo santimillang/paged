@@ -82,6 +82,8 @@ a.incident-link:hover { border-color: var(--accent); }
 .page { font-weight: 600; flex: 1 1 260px; }
 .page.paging { color: var(--crit); animation: pulse 1.2s ease-in-out infinite; }
 @keyframes pulse { 50% { opacity: 0.55; } }
+.page.holding { color: var(--ok); display: flex; align-items: center; gap: 0.6rem; }
+.hold-bar { width: 140px; }
 .clock { font-family: var(--mono); }
 .speed { display: flex; border: 1px solid var(--border); border-radius: 8px; overflow: hidden; }
 .speed button { background: none; border: 0; padding: 0.3rem 0.6rem; font-family: var(--mono); }

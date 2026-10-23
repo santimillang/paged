@@ -10,6 +10,7 @@ test('play the tutorial incident to a win', async ({ page }) => {
   await page.keyboard.press('Enter');
   await expect(page.getByText(/Autoscaling scheduled on API/)).toBeVisible();
   await page.getByRole('button', { name: '4x' }).click();
+  await expect(page.getByText(/Stabilizing: holding SLO \d+s \/ 30s/)).toBeVisible({ timeout: 60_000 });
   await expect(page.getByRole('heading', { name: 'Incident resolved' })).toBeVisible({ timeout: 90_000 });
   await expect(page.getByText('Interview Moment')).toBeVisible();
 });

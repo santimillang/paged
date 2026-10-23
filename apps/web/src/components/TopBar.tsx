@@ -1,6 +1,7 @@
 import type { SimSnapshot } from '@paged/engine';
 import type { Scenario } from '@paged/scenarios';
 import { clock, fmtPct, fmtUsers } from '../format';
+import { holdText } from '../game/pager';
 import type { Speed } from '../game/useIncident';
 
 interface Props {
@@ -19,9 +20,18 @@ export function TopBar({ snap, scenario, page, speed, setSpeed }: Props) {
   const budget = Math.max(0, st.errorBudgetFraction);
   return (
     <header className="topbar">
-      <div className={`page${page ? ' paging' : ''}`} role="status">
-        {page ? <>🔴 PAGE: {page}</> : <>🟢 All quiet</>}
-      </div>
+      {page && st.sloHealthy && st.healthyForSeconds > 0 ? (
+        <div className="page holding" role="status">
+          <span>✅ {holdText(st)}</span>
+          <span className="bar hold-bar">
+            <span className="bar-fill ok" style={{ width: `${Math.min(1, st.healthyForSeconds / st.holdTargetSeconds) * 100}%` }} />
+          </span>
+        </div>
+      ) : (
+        <div className={`page${page ? ' paging' : ''}`} role="status">
+          {page ? <>🔴 PAGE: {page}</> : <>🟢 All quiet</>}
+        </div>
+      )}
       <div className="clock" aria-label="Simulated time">⏱ {clock(snap.t)}</div>
       <div className="speed" role="group" aria-label="Speed">
         {SPEEDS.map((s) => (

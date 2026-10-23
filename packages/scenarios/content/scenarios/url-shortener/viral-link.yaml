@@ -2,7 +2,7 @@
 #  before: cache 2600/12000 -> rho 0.22, healthy.
 #  t=20 hot-key share 0.5 + GET x3 -> cache hot partition rho ~1.58 -> ~77% availability -> do nothing loses.
 #  mitigate-only: scale cache +4 -> hot share 0.5625, hot rho ~1.43 -> still overloaded -> loses.
-#  full: add-cdn in front of lb (lands t=52, warms 0.05/s); hit >= ~0.37 by t=60 -> hot rho < 0.9 -> wins ~t=120.
+#  full: add-cdn in front of lb (lands t=52, warms 0.05/s); hit >= ~0.37 by t=60 -> hot rho < 0.9 -> holds 30s -> wins ~t=88.
 id: viral-link
 world: url-shortener
 stage: "10M users"
@@ -32,7 +32,7 @@ faults:
 toolbox:
   mitigate: [scale, rate-limit, shed-load]
   design: [add-cdn, request-coalescing]
-win: { sloHealthyForSeconds: 60 }
+win: { sloHealthyForSeconds: 30 }
 requiredDesignFixes: [add-cdn]
 budgetTarget: 0.5
 costTarget: 450

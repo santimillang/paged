@@ -2,7 +2,7 @@
 #  before: db reads 1200/2000 + writes 100/1000 -> rho 0.7, healthy.
 #  t=15 spike x2.5 on reads -> db rho 1.6 -> ~54% availability, db latency 500ms -> do nothing loses.
 #  mitigate-only: rate-limit lb at 2000 -> still ~46% errors -> loses.
-#  full: add-cache on db (lands t=37, warms 0.02/s); at t=65 hit ~0.56 -> db rho ~0.76; lift rate limit at t=65 -> wins ~t=125.
+#  full: add-cache on db (lands t=37, warms 0.02/s); at t=65 hit ~0.56 -> db rho ~0.76; lift rate limit at t=65 -> holds 30s -> wins ~t=100.
 id: read-heavy
 world: url-shortener
 stage: "100k users"
@@ -30,7 +30,7 @@ faults:
 toolbox:
   mitigate: [scale, rate-limit, shed-load]
   design: [add-cache, add-read-replica]
-win: { sloHealthyForSeconds: 60 }
+win: { sloHealthyForSeconds: 30 }
 requiredDesignFixes: [add-cache, add-read-replica]
 budgetTarget: 0.5
 costTarget: 200

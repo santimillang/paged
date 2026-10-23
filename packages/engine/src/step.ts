@@ -234,6 +234,8 @@ function updateStats(s: SimState): void {
     errorBudgetFraction: s.budgetRemaining / s.scenario.errorBudgetSeconds,
     usersOnline: Math.round((s.scenario.baseUsers ?? 1_000_000) * s.userFactor),
     costPerHour: costPerHour(s),
+    healthyForSeconds: Math.round(s.healthyStreak * 10) / 10,
+    holdTargetSeconds: s.scenario.win.sloHealthyForSeconds,
   };
   if (s.budgetRemaining <= 0 || s.t >= (s.scenario.timeLimitSeconds ?? 600) - 1e-9) {
     s.outcome = 'lost';

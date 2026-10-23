@@ -46,6 +46,23 @@ describe('review fixes: idle routes', () => {
   });
 });
 
+describe('hold timer', () => {
+  it('exposes how long the SLO has held since the last fault started, and the target', () => {
+    const s = createState(threeTier({ faults: [{ at: 2, type: 'traffic-spike', multiplier: 1.1 }] }), 1);
+    run(s, 1);
+    expect(s.stats.healthyForSeconds).toBe(0);
+    expect(s.stats.holdTargetSeconds).toBe(30);
+    run(s, 6);
+    expect(s.stats.healthyForSeconds).toBeCloseTo(5, 0);
+  });
+
+  it('resets when the SLO breaks', () => {
+    const s = createState(threeTier({ faults: [{ at: 0, type: 'traffic-spike', multiplier: 4 }] }), 1);
+    run(s, 3);
+    expect(s.stats.healthyForSeconds).toBe(0);
+  });
+});
+
 describe('step: overload', () => {
   it('rejects excess load and burns the error budget until lost', () => {
     const s = createState(threeTier({ rps: 2000 }), 1);

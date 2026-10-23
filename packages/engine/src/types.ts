@@ -121,6 +121,9 @@ export interface GlobalStats {
   errorBudgetFraction: number;
   usersOnline: number;
   costPerHour: number;
+  /** Seconds the SLO has held continuously since every fault started; the win needs holdTargetSeconds. */
+  healthyForSeconds: number;
+  holdTargetSeconds: number;
 }
 
 export interface LogEntry {
