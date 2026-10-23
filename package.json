@@ -5,6 +5,7 @@
   "packageManager": "pnpm@10.30.3",
   "engines": { "node": ">=22" },
   "scripts": {
+    "dev": "pnpm --filter @paged/web dev",
     "test": "pnpm -r test",
     "typecheck": "pnpm -r typecheck",
     "validate": "pnpm --filter @paged/scenarios validate"
