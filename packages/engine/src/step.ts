@@ -1,3 +1,5 @@
+import { applyDueActions } from './actions';
+import { runAutoscalers } from './autoscale';
 import { injectedLatency, startDueFaults, trafficMultiplier } from './faults';
 import { isCacheLike, type RuntimeNode } from './graph';
 import {
@@ -20,6 +22,8 @@ export function step(s: SimState): void {
   s.tick += 1;
   s.t = Math.round(s.tick * DT * 1000) / 1000;
   startDueFaults(s);
+  applyDueActions(s);
+  runAutoscalers(s);
   computeFlows(s);
   computeLatencyAndSuccess(s);
   scheduleRetries(s);
