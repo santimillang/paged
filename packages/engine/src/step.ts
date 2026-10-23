@@ -7,6 +7,7 @@ import {
   poolAcceptFraction, queueLatency, timeoutFraction, utilization,
 } from './queueing';
 import { DT, getNode, type RuntimeRoute, type SimState } from './state';
+import { recordOutputs } from './outputs';
 import { patternMultiplier } from './traffic';
 
 /** Share of cache misses that still hit the backend when coalescing is on. */
@@ -29,6 +30,7 @@ export function step(s: SimState): void {
   scheduleRetries(s);
   warmCaches(s);
   updateStats(s);
+  recordOutputs(s);
 }
 
 function computeFlows(s: SimState): void {
